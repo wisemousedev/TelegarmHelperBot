@@ -46,7 +46,7 @@ def handle_message(message):
     )
     mh.MessageHistory.add_response(user_id, response['choices'][0]['text'], message.date)
     bot.send_message(chat_id=message.from_user.id, text=response['choices'][0]['text'])
-    print(f"{datetime.datetime.fromtimestamp(message.date)} \n {message.from_user.first_name}:\n {message.text} \n Bot: {response['choices'][0]['text']} \n")
+    #print(f"{datetime.datetime.fromtimestamp(message.date)} \n {message.from_user.first_name}:\n {message.text} \n Bot: {response['choices'][0]['text']} \n")
 
 bot.polling()
 
