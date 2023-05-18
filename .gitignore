@@ -1,2 +1,29 @@
-*.env*
+# Byte-compiled / optimized files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment / IDE specific files
+.env
+.vscode/
+.idea/
+*.egg-info/
+
+# Dependency directories
 venv/
+env/
+env.bak/
+
+# Compiled Python modules
+*.pyc
+*.pyo
+
+# Logs and data files
+*.log
+*.csv
+*.json
+
+# OS generated files
+.DS_Store
+Thumbs.db
