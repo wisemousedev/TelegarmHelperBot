@@ -1,68 +1,51 @@
-import datetime
-import os
 import json
-
+import os
+from collections import defaultdict
+from datetime import datetime
 
 class MessageHistory:
-    MESSAGE_HISTORY_FILE = "message_history.json"
+    def __init__(self, directory="message_history"):
+        self.directory = directory
+        os.makedirs(directory, exist_ok=True)
+        self.histories = defaultdict(list)
+        self.message_lists = defaultdict(list)  # Store the message lists here
 
-    @staticmethod
-    def load():
-        if os.path.exists(MessageHistory.MESSAGE_HISTORY_FILE):
-            with open(MessageHistory.MESSAGE_HISTORY_FILE, "r") as f:
-                return json.load(f)
-        else:
-            return {}
+        # Load message histories from saved JSON files
+        for filename in os.listdir(directory):
+            if filename.endswith(".json"):
+                user_id = filename[:-5]  # remove the ".json" extension
+                self.load(user_id)
 
-    @staticmethod
-    def save(message_history):
-        with open(MessageHistory.MESSAGE_HISTORY_FILE, "w") as f:
-            json.dump(message_history, f, indent=4)
+    def add_message(self, user_id, message, is_response=False):
+        self.histories[user_id].append({
+            'timestamp': datetime.fromtimestamp(message.date).strftime('%Y-%m-%d %H:%M:%S'),
+            'first_name': message.from_user.first_name,
+            'id': message.from_user.id,
+            'text': message.text,
+            'is_response': is_response
+        })
 
-    @staticmethod
-    def add_message(user_id, message):
-        message_history = MessageHistory.load()
+    def add_response(self, user_id, response, timestamp):
+        self.histories[user_id].append({
+            'timestamp': datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S'),
+            'text': response,
+            'is_response': True
+        })
 
-        if user_id not in message_history:
-            message_history[user_id] = []
+    def save(self):
+        for user_id, history in self.histories.items():
+            with open(f"{self.directory}/{user_id}.json", 'w', encoding='utf-8') as f:
+                json.dump(history, f, default=str, ensure_ascii=False)
 
-        message_entry = {
-            "message": message.text,
-            "timestamp": message.date,
-            "is_response": False
-        }
+    def load(self, user_id):
+        try:
+            with open(f"{self.directory}/{user_id}.json", 'r', encoding='utf-8') as f:
+                self.histories[user_id] = json.load(f)
+        except FileNotFoundError:
+            self.histories[user_id] = []
 
-        message_history[user_id].append(message_entry)
-        MessageHistory.save(message_history)
+    def save_messages(self, user_id, messages):
+        self.message_lists[user_id] = messages
 
-    @staticmethod
-    def add_response(user_id, text, timestamp):
-        message_history = MessageHistory.load()
-
-        if user_id not in message_history:
-            message_history[user_id] = []
-
-        message_entry = {
-            "message": text,
-            "timestamp": timestamp,
-            "is_response": True
-        }
-
-        message_history[user_id].append(message_entry)
-        MessageHistory.save(message_history)
-
-    @staticmethod
-    def print_user_messages(user_id):
-        message_history = MessageHistory.load()
-
-        if user_id not in message_history:
-            print(f"No messages found for user: {user_id}")
-            return
-
-        # Sort messages by timestamp
-        sorted_messages = sorted(message_history[user_id],
-                                 key=lambda x: datetime.datetime.fromtimestamp(x['timestamp']))
-
-        for message in sorted_messages:
-            message_type = 'Response' if message['is_response'] else 'Message'
-            print(f"{message_type} at {datetime.datetime.fromtimestamp(message['timestamp'])}: {message['message']}")
+    def load_messages(self, user_id):
+        return self.message_lists[user_id]
